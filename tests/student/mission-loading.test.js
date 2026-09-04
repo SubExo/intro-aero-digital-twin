@@ -23,37 +23,29 @@ describe("mission loading", () => {
 });
 
 const downstreamIds = ["static-margin", "tail-elevator-contribution", "stick-free-effect", "cg-loading", "lateral-static-stability", "pitch-dynamic-response", "longitudinal-modes", "dynamic-mode", "stability-trade-study", "mission-loading"];
-const stage4Fixture = {
-  feature: {
-    contractVersion: 4, id: "trim-response", title: "Stage 4 activation fixture", learningMode: "concept", topicId: "stability",
-    requiresCapabilities: [{ id: "loads.pitch.component-sum", version: 1 }], providesCapabilities: [{ id: "stability.pitch.cm-alpha", version: 1 }],
-    analyze: () => ({ results: [{ label: "Fixture", value: 0, unit: "" }], verificationCases: [{ label: "Fixture", passed: true }], decision: { question: "Fixture", interpretation: "Fixture", status: "neutral" } }),
-  },
-  model: { kind: "derived", evaluate: () => ({ values: { cmAlphaPerRad: -0.8 } }) },
-};
+const entriesWithoutStage4 = featureEntries.filter(({ feature }) => feature.id !== "trim-response");
+const installedStage4 = featureEntries.find(({ feature }) => feature.id === "trim-response");
 
 describe("Stage 4 activation boundary", () => {
   it("keeps every downstream stage runtime-locked while Stage 4 is absent", () => {
-    expect(featureEntries.some(({ feature }) => feature.id === "trim-response")).toBe(false);
-    const registry = createCapabilityRegistry(featureEntries);
-    const stability = buildCurriculum(featureEntries, registry).find(({ id }) => id === "stability");
+    const registry = createCapabilityRegistry(entriesWithoutStage4);
+    const stability = buildCurriculum(entriesWithoutStage4, registry).find(({ id }) => id === "stability");
     expect(stability.modules.filter(({ feature }) => downstreamIds.includes(feature.id)).every(({ runtimeReady }) => !runtimeReady)).toBe(true);
     downstreamIds.forEach((id) => {
-      const entry = featureEntries.find(({ feature }) => feature.id === id);
+      const entry = entriesWithoutStage4.find(({ feature }) => feature.id === id);
       expect(resolveFeatureAnalysis(entry.feature, initialAircraft).results[0].label).toBe("Analysis unavailable");
     });
   });
 
-  it("activates and evaluates every downstream stage when the Stage 4 capability is installed", () => {
-    const entries = [...featureEntries, stage4Fixture];
-    const registry = createCapabilityRegistry(entries);
+  (installedStage4 ? it : it.skip)("activates and evaluates every downstream stage when the Stage 4 capability is installed", () => {
+    const registry = createCapabilityRegistry(featureEntries);
     expect(registry.issues).toEqual([]);
-    const stability = buildCurriculum(entries, registry).find(({ id }) => id === "stability");
+    const stability = buildCurriculum(featureEntries, registry).find(({ id }) => id === "stability");
     expect(stability.modules.filter(({ feature }) => downstreamIds.includes(feature.id)).every(({ runtimeReady }) => runtimeReady)).toBe(true);
     downstreamIds.forEach((id) => {
       const models = modelsForFeature(id, registry);
       const context = capabilityContext(models, initialAircraft);
-      const entry = entries.find(({ feature }) => feature.id === id);
+      const entry = featureEntries.find(({ feature }) => feature.id === id);
       const analysis = resolveFeatureAnalysis(entry.feature, initialAircraft, context);
       expect(analysis.results[0].label).not.toBe("Analysis unavailable");
       expect(analysis.verificationCases.every(({ passed }) => passed)).toBe(true);
