@@ -144,7 +144,9 @@ Define all three cases before implementation. Include exact inputs, expected out
 Use your Section 8 reference calculation.
 
 ```text
-[COMPLETE]
+Case 1 - Restoring: The aircraft develops a force that return it towards equilibrium after a disturbance
+Case 2 - Neutral: No tendency to correct any change of force after a disturbance
+Case 3: Unstable: The force that the aircraft develops pushes the aircraft away from equilibrium
 ```
 
 ### 9.2 Behavioral case
@@ -152,7 +154,8 @@ Use your Section 8 reference calculation.
 Change one input and state the exact trend or sign that must result.
 
 ```text
-[COMPLETE]
+delta_alpha was changed to +3.00 deg
+Only delta_Cm is changed to −0.0419
 ```
 
 ### 9.3 Boundary or sanity case
@@ -160,7 +163,12 @@ Change one input and state the exact trend or sign that must result.
 Use an informative boundary such as zero slope, zero disturbance, or the trim condition. State the exact behavior expected and why division by zero or a false physical claim must not occur.
 
 ```text
-[COMPLETE]
+Chosen boundary: zero slope
+Zero slope means Cm_alpha = 0
+alpha_trim is divided by 0 so it is undefined, dividing 0 has no finite solution
+delta_Cm is 0 because it is multiplied by Cm_alpha which is 0 
+The selected condition is changed to untrimmed because Cm(alpha) = 0.04
+The disturbance tendency is changed to neutral because no destabilising or restoring moment can develop while the slope is zero
 ```
 
 ## 10. Feature Requirements
@@ -196,7 +204,7 @@ Do not modify any existing file.
 In one or two sentences, state what decision the completed feature will support and what it cannot establish.
 
 ```text
-[COMPLETE]
+This completed feature supports the decision of whether the aircraft's current trim angle at a specific angle of attack is a valid equilibrium point and whether a small disturbance from that point will have a tendency to be restoring, neutral or unstable based on only the Cm_alpha. It cannot establish whether the aircraft is safe for flight or is controllable. This also does not take into account human error, or the motion after the disturbance, only the inital tendency. 
 ```
 
 ---
