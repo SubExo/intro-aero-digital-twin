@@ -41,7 +41,7 @@ Classify the disturbance by the sign of `delta_alpha_rad * delta_Cm`:
 - positive: destabilizing tendency; and
 - zero: neutral tendency.
 
-Treat the selected condition as trimmed when `abs(Cm(alpha)) <= 1e-6`. Otherwise it is not trimmed. When `Cm_alpha` is zero, no unique trim angle can be calculated. Report that trim angle as not available rather than dividing by zero.
+Treat the selected condition as trimmed when `abs(Cm(alpha)) <= 1e-4`. Otherwise it is not trimmed. When `Cm_alpha` is zero, no unique trim angle can be calculated. Report that trim angle as not available rather than dividing by zero.
 
 Required earlier capability:
 
@@ -147,6 +147,26 @@ Use your Section 8 reference calculation.
 Case 1 - Restoring: The aircraft develops a force that return it towards equilibrium after a disturbance
 Case 2 - Neutral: No tendency to correct any change of force after a disturbance
 Case 3: Unstable: The force that the aircraft develops pushes the aircraft away from equilibrium
+
+Cm0 = 0.04
+Cm_alpha = -0.8 1/rad
+alpha = 2.86 deg
+delta_alpha = +2.00 deg
+
+Angle conversion:
+alpha_rad = 2.86 * pi / 180 = 0.0499164166 rad
+delta_alpha_rad = +2 * pi / 180 = 0.034906585 rad
+
+Current pitching-moment coefficient:
+Cm(alpha) = 0.04 + -0.8 * 0.0499164166 = 0.00006686672
+
+Trim angle:
+alpha_trim_rad = -0.04 / -0.8 = 0.05 rad
+alpha_trim_deg = 0.05 * 180 / pi = +2.8648 deg
+
+Disturbance response:
+delta_Cm = -0.8 * 0.034906585 = -0.027925268
+Tolerance: ±1e-6 for Cm(alpha)/delta_Cm, ±1e-4 deg for alpha_trim_deg
 ```
 
 ### 9.2 Behavioral case
