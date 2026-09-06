@@ -181,7 +181,7 @@ Use an analysis-only Version 4 module. The values and plot update when aircraft 
 
 ## 11. Files to Create
 
-Create exactly these three new files:
+Create or replace exactly these three student files:
 
 - `src/student/physics/trim-response.js`
 - `src/student/features/trim-response.feature.js`
@@ -189,7 +189,7 @@ Create exactly these three new files:
 
 Feature ID: `trim-response`
 
-Do not modify any existing file.
+Do not modify any file outside these three student paths.
 
 ## 12. Engineering Decision Enabled — STUDENT COMPLETES
 
@@ -235,16 +235,18 @@ If the student requests a correction, return a complete revised Implementation I
 
 Generate code only after the student replies with the exact phrase `APPROVE ENGINEERING INTERPRETATION` in the same conversation. Approval authorizes implementation of the displayed interpretation only; it is not evidence that the model is correct or valid.
 
-After approval, provide the complete contents of exactly the three new files in Section 11, each in a separately labeled code block. Do not provide patches, partial snippets, extra files, package changes, terminal commands, or edits to existing files.
+After approval, provide the complete contents of exactly the three student files in Section 11 (complete replacements when they already exist), each in a separately labeled code block. Do not provide patches, partial snippets, extra files, package changes, terminal commands, or edits outside those three student paths.
 
 ## Application contract
+
+Adapter contract revision: `stage4-adapter-2026-09-06`. This entire fixed contract must accompany the completed engineering sections when sent to ChatGPT.
 
 - The application uses Vite, React, plain JavaScript, and Vitest.
 - Put all engineering equations in `src/student/physics/trim-response.js` as exported pure functions.
 - The physics file has no React imports, browser dependencies, or mutable shared state.
 - Use SI units internally. Convert degree inputs to radians where required and reject obviously invalid numeric inputs.
 - Concisely comment input units, output units, sign conventions, and important assumptions.
-- Do not add dependencies or modify existing files.
+- Do not add dependencies or modify files outside the three paths in Section 11. Regeneration replaces those same three files; never create backup copies ending in `.feature.js` inside the feature directory.
 - The application automatically discovers `src/student/features/*.feature.js`.
 - The feature file contains no React, JSX, HTML, CSS, class names, inline styles, or imported shared UI components. The application formats structured data automatically.
 - Do not request repository files. This specification contains the stable contract needed for this feature.
@@ -260,73 +262,137 @@ The shared `aircraft` object contains the four required canonical fields:
 }
 ```
 
-## Feature data contract
+## Feature adapter contract — exact shapes
 
-`src/student/features/trim-response.feature.js` imports functions from its new physics file and exports one `feature` object with this structure:
+The adapter connects the approved physics to the application. It must not invent engineering equations, reference answers, or missing verification cases. All calculations belong in the pure physics file. Generate every helper referenced below; helper names are illustrative, but application field names and context access are exact.
+
+### Capability access: two different arguments
+
+The application calls `feature.analyze(aircraft, capabilityMap)`. The second argument IS the map. It is not an array and has no `.capabilities` wrapper. A registered entry has `{ id, version, values, ... }`.
+
+The application calls `model.evaluate(runtimeContext)`. This argument contains `.aircraft` and `.capabilities`.
+
+Use this exact helper and these call patterns:
 
 ```javascript
-export const feature = {
+function requireStage3(capabilityMap) {
+  const source = capabilityMap?.["loads.pitch.component-sum"];
+  if (!source || !(source.version >= 1)) {
+    throw new TypeError("Stage 3 loads.pitch.component-sum capability v1 is required.");
+  }
+  return source;
+}
+
+// Inside feature:
+analyze(aircraft, capabilityMap) {
+  requireStage3(capabilityMap);
+  // Call generated helpers that use only the approved pure physics functions.
+  // Each helper below must be implemented, not left as a placeholder.
+  const output = calculateOutputs(aircraft);
+  return {
+    results: buildResults(output),
+    verificationCases: buildVerificationCases(),
+    decision: buildDecision(output),
+    plots: [buildCmAlphaPlot(aircraft)],
+    scene: null,
+  };
+}
+
+// Separate named export in the SAME feature file:
+export const model = {
+  kind: "derived",
+  evaluate(runtimeContext) {
+    requireStage3(runtimeContext.capabilities);
+    const output = calculateOutputs(runtimeContext.aircraft);
+    return { values: buildRuntimeValues(output) };
+  },
+};
+```
+
+Never wrap the argument to `analyze` in a made-up object in tests. Never return empty results, empty verification, or empty model values to conceal a missing prerequisite. Throw a descriptive error; the core converts an analysis exception into a visible failure.
+
+### Feature metadata
+
+Export `feature` and `model` from `src/student/features/trim-response.feature.js`. Keep this metadata exactly:
+
+```javascript
+{
   contractVersion: 4,
   id: "trim-response",
   title: "Live Cm–alpha relationship and trim",
-  description: "One-sentence engineering purpose",
   category: "Stability · Student feature",
   learningMode: "concept",
   topicId: "stability",
   inputKeys: ["cm0", "cmAlphaPerRad", "angleOfAttackDeg", "disturbanceAlphaDeg"],
   requiresCapabilities: [{ id: "loads.pitch.component-sum", version: 1 }],
   providesCapabilities: [{ id: "stability.pitch.cm-alpha", version: 1 }],
-  assumptions: ["Concise assumptions from Section 5"],
-  validityLimits: ["Concise validity limits from Section 6"],
   simulation: {
-    display: "analysis-only",
-    durationS: 1,
-    initialState: {},
-    controls: {},
-    disturbance: {}
-  },
-
-  analyze(aircraft, capabilityContext) {
-    // Confirm the required capability is available, then call imported physics
-    // functions. Do not repeat equations or earlier-stage physics here.
-    return {
-      results: [],
-      verificationCases: [],
-      decision: {
-        question: "The Section 1 engineering question",
-        interpretation: "Qualified interpretation based on current results",
-        status: "pass"
-      },
-      plots: [],
-      scene: null
-    };
+    display: "analysis-only", durationS: 1,
+    initialState: {}, controls: {}, disturbance: {}
   }
-};
-
-export const model = {
-  kind: "derived",
-  evaluate(runtimeContext) {
-    // Call the new pure physics functions and return finite calculated values.
-    return { values: {} };
-  }
-};
+}
 ```
 
-Contract rules:
+Also supply `description`, `assumptions`, `validityLimits`, and `analyze` from the approved specification. Do not import earlier student stages. There is no time-response model or new core file.
 
-- `results` contains every output required by Section 4.
-- Numeric result values are finite numbers. A result may use short text only for a classification or for the specified unavailable trim angle.
-- `unit` is always a string, including `""` for dimensionless values.
-- `precision` is a non-negative integer for numeric display.
-- Use `emphasis: true` only for the primary result.
-- `verificationCases` implements every completed case from Section 9 using the imported physics functions.
-- Each `passed` value is a Boolean expression, never hard-coded `true`.
-- `decision.status` is `"pass"`, `"caution"`, or `"neutral"` and must not overclaim safety or real-world validation.
-- Plot points are calculated with the physics functions. Include `regions: []`; include the required `Cm = 0` line in `referenceLines`.
-- `scene` is `null` because Section 10 requests no overlay.
-- `model.evaluate(runtimeContext)` returns `{ values }`, does not mutate its context, and does not repeat equations.
-- The required Stage 3 capability is read only through `capabilityContext` or `runtimeContext.capabilities`. Do not import an earlier student module.
-- Do not invent a time-response model. `analysis-only` still evaluates the capability when inputs change.
+### Results and runtime values
+
+`buildResults(output)` returns one nonempty array containing every Section 4 output. Each item follows this shape (variables stand for calculated or approved content):
+
+```javascript
+{
+  label: descriptiveLabel,
+  value: finiteNumberOrText,
+  unit: unitString,
+  precision: nonNegativeInteger,
+  emphasis: isPrimaryResult
+}
+```
+
+- Result `value` must be a finite number or string, never Boolean, `null`, `undefined`, `NaN`, or infinity.
+- Render a Boolean trim calculation as `trimmed ? "trimmed" : "not trimmed"`.
+- Render an unavailable trim angle as `"not available"`, with unit `""`; available trim angles use `"deg"`.
+- Use `""` for dimensionless units, and emphasize only the primary result.
+- `buildRuntimeValues(output)` returns a nonempty, flat object of finite numbers, descriptive strings, or Booleans. No arrays, nested objects, `null`, `undefined`, or nonfinite numbers are allowed in `values`.
+- If a pure function uses `null` for unavailable trim, convert it to `"not available"` BEFORE returning runtime values as well as display results.
+- Do not mutate the supplied aircraft or context.
+
+### Verification and engineering decision
+
+`buildVerificationCases()` calculates all three approved Section 9 cases using the pure physics functions and returns:
+
+```javascript
+[
+  { label: "Numerical case", passed: numericalComparison },
+  { label: "Behavioral case", passed: behavioralComparison },
+  { label: "Boundary or sanity case", passed: boundaryComparison }
+]
+```
+
+Each comparison must be computed, Boolean, and use the approved inputs and justified tolerances. Use `label`, not `title`. Do not hard-code passes. If Section 9 is unfinished, stop before generating files; empty verification arrays are not a substitute.
+
+`buildDecision(output)` returns `{ question, interpretation, status }`, where text reflects Sections 1 and 12 and the current calculated outputs. Status is `"pass"`, `"caution"`, or `"neutral"` and does not assert real-world safety.
+
+Treat trim status and disturbance tendency as independent outputs. Handle every combination explicitly. In particular, an untrimmed condition may still have a restoring tendency; it must not fall through to a neutral description. Check the interpretation against the displayed classifications for the approved reference, behavioral, and boundary cases.
+
+### Plot
+
+`buildCmAlphaPlot(aircraft)` must use this exact structure:
+
+```javascript
+{
+  id: "cm-alpha",
+  title: "Cm–alpha relationship",
+  xLabel: "Angle of attack (deg)",
+  yLabel: "Pitching-moment coefficient, Cm",
+  currentX: aircraft.angleOfAttackDeg,
+  series: [{ label: "Cm(alpha)", points: calculatedPoints }],
+  regions: [],
+  referenceLines: [{ axis: "y", value: 0, label: "Cm = 0" }]
+}
+```
+
+`calculatedPoints` is a nonempty array of `{ x: angleInDegrees, y: calculatedCm }` with finite numbers, calculated using the pure physics functions over Section 10's range. Include the selected angle when it is in range and sort points by x. Do not use `xAxis`, `yAxis`, `xUnit`, `yUnit`, or top-level `points`; the renderer does not read them.
 
 ## Test contract
 
@@ -336,6 +402,12 @@ Contract rules:
 - Use justified tolerances for floating-point comparisons.
 - Do not test React components or copy equations into the expected-value side of a test when a pre-calculated reference number is available.
 - Do not claim that passing tests proves model validity, safety, or real-world validation.
+
+### Integration checks already supplied by the course
+
+The repository's normal `npm test` includes `tests/core/stage4-integration.test.js`. It uses the installed feature and real runtime; it does not install a mock Stage 4. Before Stage 4 exists, its installed-feature checks are skipped. After installation, they check the default aircraft, zero slope, zero disturbance, display values, runtime values, verification, and normalized plots. These are interface checks, not engineering reference answers or proof of model validity.
+
+Do not edit, delete, skip, or weaken instructor checks. If a check fails, repair only the three student files against this contract. The student physics tests must still implement all three approved Section 9 cases, and should also check that decision text agrees with calculated trim and tendency. Physics tests alone do not verify dashboard integration.
 
 ## Required response format
 
