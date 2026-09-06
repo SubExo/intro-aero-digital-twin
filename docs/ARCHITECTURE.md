@@ -72,6 +72,10 @@ Model kinds are deliberately small:
 
 The core rejects invalid kinds, non-finite output, duplicate capability providers, version mismatches, missing requirements, and dependency cycles. Later modules receive earlier results in `runtimeContext.capabilities`; they do not copy or import earlier equations.
 
+Each runtime capability entry contains the provider's calculation fields plus its registered `id` and `version`. For example, `capabilityContext["earlier.capability"]` in `analyze` and `runtimeContext.capabilities["earlier.capability"]` in `evaluate` both expose `{ values, id, version }` for a derived provider. Loads and derivatives remain available in their existing fields. The core supplies authoritative metadata from `providesCapabilities`; providers do not need to return it. The registry still enforces minimum versions and missing prerequisites.
+
+Verification cases use `{ label, passed }`. For compatibility with generated features, the analysis adapter also accepts `name` as a fallback when `label` is absent, without changing the pass/fail result or mutating the feature's output.
+
 Version 1–3 modules continue to receive `analyze(aircraft)` and remain analysis-only.
 
 ## Runtime and evidence

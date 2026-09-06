@@ -74,6 +74,25 @@ Open the forwarded **Aircraft digital twin** port, select **Stability**, and con
 
 If that is not what you see, stop and show your instructor the URL of your fork and a screenshot of the Stability topic. Do not ask ChatGPT to create or repair any stage other than Stage 4. Stop the development server with **Control+C** before continuing.
 
+## Updating an existing fork and specification
+
+**Sync fork updates GitHub; it does not update an existing Codespace.** Save your work and commit your student files first. On your GitHub fork choose **Sync fork → Update branch**, then in the Codespaces terminal run:
+
+```bash
+git pull --no-rebase --no-edit origin main
+npm test
+```
+
+If Git reports conflicts or uncommitted changes that prevent the pull, stop and share the output. Do not discard work or force-push. The merge preserves committed student work. An installed Stage 4 may now fail the new integration checks even if its old physics tests passed; use the updated contract below to regenerate it.
+
+For an existing completed specification, preserve Sections 1–12. Replace only the section beginning **Fixed AI Implementation Contract — Do Not Edit** through the end of the file with that entire section from the updated `templates/STAGE-4-TRIM-RESPONSE-STARTER.md`. Confirm it contains revision `stage4-adapter-2026-09-06`. Syncing does not replace the contract in your personal copy automatically.
+
+Download the updated completed specification and attach it to a new ChatGPT conversation. Use the interpretation and approval process in Sections 4–5. After approval, request complete replacements for the same three files; overwrite them in their original locations. Do not place backup `.feature.js` files in the features directory. No extra student file, dependency, or app change is needed.
+
+After replacement run `npm test` and `npm run build`, then check Stage 4 Outputs, Verification, and Plots. If an integration check fails, attach the current three student files and full first failure to the same ChatGPT conversation with:
+
+> Repair only these three student files against the attached specification's fixed adapter contract. Preserve the approved engineering reasoning. Diagnose the reported integration failure, and return complete replacement files. Do not change instructor tests or other stages. If engineering information is missing or contradictory, ask for clarification instead of inventing it.
+
 ## 3. Prepare the one file ChatGPT needs
 
 ChatGPT does not need access to your GitHub repository. It needs one completed and instructor-approved specification containing both the Stage 4 engineering definition and the fixed application contract.

@@ -19,7 +19,14 @@ function assertAnalysis(analysis) {
     }
   });
 
-  return analysis;
+  const needsLabels = analysis.verificationCases.some((item) => !item.label && typeof item.name === "string");
+  if (!needsLabels) return analysis;
+  return {
+    ...analysis,
+    verificationCases: analysis.verificationCases.map((item) => (
+      !item.label && typeof item.name === "string" ? { ...item, label: item.name } : item
+    )),
+  };
 }
 
 function failedAnalysis(feature, error) {

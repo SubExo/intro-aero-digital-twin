@@ -78,8 +78,9 @@ export function evaluateModels(entries, aircraft, state, timeS, scenario = {}) {
       });
     }
     if (Array.isArray(result.diagnostics)) diagnostics.push(...result.diagnostics.map(String));
-    normalizeCapabilities(entry.feature.providesCapabilities, `Feature ${entry.feature.id} provided`).forEach(({ id }) => {
-      context.capabilities[id] = result;
+    normalizeCapabilities(entry.feature.providesCapabilities, `Feature ${entry.feature.id} provided`).forEach(({ id, version }) => {
+      // Preserve calculation fields while exposing the registered metadata to consumers.
+      context.capabilities[id] = { ...result, id, version };
     });
   });
 
